@@ -63,7 +63,7 @@ interface SetWorkspacePathArgs {
 
 // Tool definitions
 const buildTargetTool: Tool = {
-  name: "build_target",
+  name: "bazel_build_target",
   description: "Build specified Bazel targets",
   inputSchema: {
     type: "object",
@@ -81,8 +81,8 @@ const buildTargetTool: Tool = {
 };
 
 const queryTargetTool: Tool = {
-  name: "query_target",
-  description: "Query the dependency graph for targets matching a pattern",
+  name: "bazel_query_target",
+  description: "Query the Bazel dependency graph for targets matching a pattern",
   inputSchema: {
     type: "object",
     properties: {
@@ -96,8 +96,8 @@ const queryTargetTool: Tool = {
 };
 
 const testTargetTool: Tool = {
-  name: "test_target",
-  description: "Run tests for specified targets",
+  name: "bazel_test_target",
+  description: "Run Bazel tests for specified targets",
   inputSchema: {
     type: "object",
     properties: {
@@ -114,8 +114,8 @@ const testTargetTool: Tool = {
 };
 
 const listTargetsTool: Tool = {
-  name: "list_targets",
-  description: "List all available targets in the workspace",
+  name: "bazel_list_targets",
+  description: "List all available Bazel targets under a given path",
   inputSchema: {
     type: "object",
     properties: {
@@ -129,8 +129,8 @@ const listTargetsTool: Tool = {
 };
 
 const fetchDependenciesTool: Tool = {
-  name: "fetch_dependencies",
-  description: "Fetch external dependencies",
+  name: "bazel_fetch_dependencies",
+  description: "Fetch Bazel external dependencies",
   inputSchema: {
     type: "object",
     properties: {
@@ -139,14 +139,14 @@ const fetchDependenciesTool: Tool = {
         items: {
           type: "string",
         },
-        description: "Optional list of specific targets to fetch dependencies for",
+        description: "List of specific targets to fetch dependencies for",
       },
     },
   },
 };
 
 const setWorkspacePathTool: Tool = {
-  name: "set_workspace_path",
+  name: "bazel_set_workspace_path",
   description: "Set the current Bazel workspace path for subsequent commands",
   inputSchema: {
     type: "object",
