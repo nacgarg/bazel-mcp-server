@@ -430,9 +430,9 @@ async function main() {
 
         let response;
         switch (request.params.name) {
-          case "build_target": {
+          case "bazel_build_target": {
             const args = request.params.arguments as unknown as BuildTargetArgs;
-            log(`Processing build_target with args: ${JSON.stringify(args)}`, 'info', false);
+            log(`Processing bazel_build_target with args: ${JSON.stringify(args)}`, 'info', false);
             if (!args.targets || args.targets.length === 0) {
               throw new Error("Missing required argument: targets");
             }
@@ -440,9 +440,9 @@ async function main() {
             break;
           }
 
-          case "query_target": {
+          case "bazel_query_target": {
             const args = request.params.arguments as unknown as QueryTargetArgs;
-            log(`Processing query_target with pattern: ${args.pattern}`, 'info', false);
+            log(`Processing bazel_query_target with pattern: ${args.pattern}`, 'info', false);
             if (!args.pattern) {
               throw new Error("Missing required argument: pattern");
             }
@@ -450,9 +450,9 @@ async function main() {
             break;
           }
 
-          case "test_target": {
+          case "bazel_test_target": {
             const args = request.params.arguments as unknown as TestTargetArgs;
-            log(`Processing test_target with args: ${JSON.stringify(args)}`, 'info', false);
+            log(`Processing bazel_test_target with args: ${JSON.stringify(args)}`, 'info', false);
             if (!args.targets || args.targets.length === 0) {
               throw new Error("Missing required argument: targets");
             }
@@ -460,9 +460,9 @@ async function main() {
             break;
           }
 
-          case "list_targets": {
+          case "bazel_list_targets": {
             const args = request.params.arguments as unknown as ListTargetsArgs;
-            log(`Processing list_targets for path: ${args.path}`, 'info', false);
+            log(`Processing bazel_list_targets for path: ${args.path}`, 'info', false);
             if (!args.path) {
               throw new Error("Missing required argument: path");
             }
@@ -470,16 +470,16 @@ async function main() {
             break;
           }
 
-          case "fetch_dependencies": {
+          case "bazel_fetch_dependencies": {
             const args = request.params.arguments as unknown as FetchDependenciesArgs;
-            log(`Processing fetch_dependencies`, 'info', false);
+            log(`Processing bazel_fetch_dependencies`, 'info', false);
             response = await bazelClient.fetchDependencies(args.targets);
             break;
           }
           
-          case "set_workspace_path": {
+          case "bazel_set_workspace_path": {
             const args = request.params.arguments as unknown as SetWorkspacePathArgs;
-            log(`Processing set_workspace_path to: ${args.path}`, 'info', false);
+            log(`Processing bazel_set_workspace_path to: ${args.path}`, 'info', false);
             if (!args.path) {
               throw new Error("Missing required argument: path");
             }

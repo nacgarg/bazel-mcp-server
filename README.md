@@ -6,12 +6,12 @@ A local MCP server that exposes functionality of the [Bazel](https://bazel.build
 
 The Bazel MCP Server provides the following tools:
 
-- **build_target**: Build specified Bazel targets
-- **query_target**: Query the dependency graph for targets matching a pattern
-- **test_target**: Run tests for specified targets
-- **list_targets**: List all available targets in the workspace (requires path parameter, use "//" for all targets)
-- **fetch_dependencies**: Fetch external dependencies
-- **set_workspace_path**: Change the Bazel workspace path at runtime
+- **bazel_build_target**: Build specified Bazel targets
+- **bazel_query_target**: Query the dependency graph for targets matching a pattern
+- **bazel_test_target**: Run tests for specified targets
+- **bazel_list_targets**: List all available targets in the workspace (requires path parameter, use "//" for all targets)
+- **bazel_fetch_dependencies**: Fetch external dependencies
+- **bazel_set_workspace_path**: Change the Bazel workspace path at runtime
 
 ## Usage
 
@@ -31,6 +31,7 @@ The bazel binary usually gets picked up automatically, but if you run into issue
     "bazel": {
       "command": "npx",
       "args": [
+        "-y",
         "github:nacgarg/bazel-mcp-server",
 
         // If you need to specify the bazel binary path
