@@ -32,11 +32,16 @@ The bazel binary usually gets picked up automatically, but if you run into issue
       "command": "npx",
       "args": [
         "github:nacgarg/bazel-mcp-server",
-        "--bazel_path", # If you need to specify the bazel binary path
+
+        // If you need to specify the bazel binary path
+        "--bazel_path", 
         "/absolute/path/to/your/bazel/binary",
-        "--workspace_path", # If you need to specify the workspace path
+
+        // If you need to specify the workspace path
+        "--workspace_path",
         "/absolute/path/to/your/bazel/workspace"
-        # See Configuration Table below for more options
+
+        // See Configuration Table below for more options
       ]
     }
   }
@@ -53,14 +58,12 @@ You can use the same configuration as above with Claude Desktop.
 # Run directly from GitHub (no installation needed)
 npx -y github:nacgarg/bazel-mcp-server
 
-# From npm (once published)
-npx -y @nacgarg/bazel-mcp-server
-
 # From source
 git clone https://github.com/nacgarg/bazel-mcp-server.git
 cd bazel-mcp-server
 npm install
 npm run build
+dist/index.js
 ```
 
 ### Configuration
