@@ -2,6 +2,8 @@
 
 A local MCP server that exposes functionality of the [Bazel](https://bazel.build/) build system to MCP-enabled AI agents.
 
+This is helpful when MCP environments either don't have an existing command-line tool, or where the invoked shell has a misconfigured environment that prevents Bazel from being used.
+
 ## Tools
 
 The Bazel MCP Server provides the following tools:
@@ -12,6 +14,8 @@ The Bazel MCP Server provides the following tools:
 - **bazel_list_targets**: List all available targets in the workspace (requires path parameter, use "//" for all targets)
 - **bazel_fetch_dependencies**: Fetch external dependencies
 - **bazel_set_workspace_path**: Change the Bazel workspace path at runtime
+
+Each command (except `bazel_set_workspace_path`) supports an optional `additionalArgs` parameter that allows passing additional arguments to the underlying Bazel command. This is useful for specifying flags like `--verbose_failures` or `--test_output=all`.
 
 ## Usage
 

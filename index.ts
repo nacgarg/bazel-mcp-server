@@ -39,22 +39,27 @@ function log(message: string, level: 'info' | 'error' = 'info', toConsole = true
 // Type definitions for tool arguments
 interface BuildTargetArgs {
   targets: string[];
+  additionalArgs?: string[];
 }
 
 interface QueryTargetArgs {
   pattern: string;
+  additionalArgs?: string[];
 }
 
 interface TestTargetArgs {
   targets: string[];
+  additionalArgs?: string[];
 }
 
 interface ListTargetsArgs {
   path: string;
+  additionalArgs?: string[];
 }
 
 interface FetchDependenciesArgs {
   targets?: string[];
+  additionalArgs?: string[];
 }
 
 interface SetWorkspacePathArgs {
@@ -75,6 +80,13 @@ const buildTargetTool: Tool = {
         },
         description: "List of Bazel targets to build (e.g. ['//path/to:target'])",
       },
+      additionalArgs: {
+        type: "array",
+        items: {
+          type: "string",
+        },
+        description: "Additional Bazel command line arguments (e.g. ['--verbose_failures', '--sandbox_debug'])",
+      },
     },
     required: ["targets"],
   },
@@ -89,6 +101,13 @@ const queryTargetTool: Tool = {
       pattern: {
         type: "string",
         description: "Bazel query pattern (e.g. 'deps(//path/to:target)')",
+      },
+      additionalArgs: {
+        type: "array",
+        items: {
+          type: "string",
+        },
+        description: "Additional Bazel command line arguments (e.g. ['--output=label_kind', '--noimplicit_deps'])",
       },
     },
     required: ["pattern"],
@@ -108,6 +127,13 @@ const testTargetTool: Tool = {
         },
         description: "List of Bazel test targets to run (e.g. ['//path/to:test'])",
       },
+      additionalArgs: {
+        type: "array",
+        items: {
+          type: "string",
+        },
+        description: "Additional Bazel command line arguments (e.g. ['--cache_test_results=no', '--test_output=all'])",
+      },
     },
     required: ["targets"],
   },
@@ -122,6 +148,13 @@ const listTargetsTool: Tool = {
       path: {
         type: "string",
         description: "Path within the workspace to list targets for (e.g. '//path/to' or '//' for all targets)",
+      },
+      additionalArgs: {
+        type: "array",
+        items: {
+          type: "string",
+        },
+        description: "Additional Bazel command line arguments (e.g. ['--output=build', '--keep_going'])",
       },
     },
     required: ["path"],
@@ -140,6 +173,13 @@ const fetchDependenciesTool: Tool = {
           type: "string",
         },
         description: "List of specific targets to fetch dependencies for",
+      },
+      additionalArgs: {
+        type: "array",
+        items: {
+          type: "string",
+        },
+        description: "Additional Bazel command line arguments (e.g. ['--experimental_repository_cache_hardlinks', '--repository_cache=path/to/cache'])",
       },
     },
   },
@@ -164,6 +204,8 @@ class BazelClient {
   private bazelPath: string;
   private workspacePath: string;
   private workspaceConfig: string | undefined;
+  // List of allowed prefixes for additional arguments to prevent command injection
+  private readonly allowedArgPrefixes = ['--', '-'];
 
   constructor(
     bazelPath: string,
@@ -173,6 +215,43 @@ class BazelClient {
     this.bazelPath = bazelPath;
     this.workspacePath = workspacePath;
     this.workspaceConfig = workspaceConfig;
+  }
+
+  /**
+   * Validates and sanitizes additional Bazel arguments to prevent command injection
+   * @param args Array of additional arguments to validate
+   * @returns Array of validated and sanitized arguments
+   * @throws Error if any argument is invalid or potentially dangerous
+   */
+  private validateAdditionalArgs(args: string[] | undefined): string[] {
+    if (!args || args.length === 0) {
+      return [];
+    }
+
+    const sanitizedArgs: string[] = [];
+    
+    for (const arg of args) {
+      // Skip empty arguments
+      if (!arg || arg.trim() === '') {
+        continue;
+      }
+
+      // Check if argument starts with allowed prefix
+      const isAllowed = this.allowedArgPrefixes.some(prefix => arg.startsWith(prefix));
+      if (!isAllowed) {
+        throw new Error(`Invalid argument format: "${arg}". Additional arguments must start with -- or -`);
+      }
+      
+      // Check for potentially dangerous characters that could enable command injection
+      const dangerousChars = /[;&|<>$`\\]/;
+      if (dangerousChars.test(arg)) {
+        throw new Error(`Argument contains potentially dangerous characters: "${arg}"`);
+      }
+      
+      sanitizedArgs.push(arg);
+    }
+    
+    return sanitizedArgs;
   }
 
   private runBazelCommand(
@@ -234,28 +313,37 @@ class BazelClient {
     });
   }
 
-  async buildTargets(targets: string[], onOutput?: (chunk: string) => void): Promise<string> {
-    const { stdout, stderr } = await this.runBazelCommand("build", targets, onOutput);
+  async buildTargets(targets: string[], additionalArgs?: string[], onOutput?: (chunk: string) => void): Promise<string> {
+    const validatedArgs = this.validateAdditionalArgs(additionalArgs);
+    const allArgs = [...targets, ...validatedArgs];
+    const { stdout, stderr } = await this.runBazelCommand("build", allArgs, onOutput);
     return `${stdout}\n${stderr}`;
   }
 
-  async queryTarget(pattern: string, onOutput?: (chunk: string) => void): Promise<string> {
-    const { stdout, stderr } = await this.runBazelCommand("query", [pattern], onOutput);
+  async queryTarget(pattern: string, additionalArgs?: string[], onOutput?: (chunk: string) => void): Promise<string> {
+    const validatedArgs = this.validateAdditionalArgs(additionalArgs);
+    const allArgs = [pattern, ...validatedArgs];
+    const { stdout, stderr } = await this.runBazelCommand("query", allArgs, onOutput);
     return stdout || stderr;
   }
 
-  async testTargets(targets: string[], onOutput?: (chunk: string) => void): Promise<string> {
-    const { stdout, stderr } = await this.runBazelCommand("test", targets, onOutput);
+  async testTargets(targets: string[], additionalArgs?: string[], onOutput?: (chunk: string) => void): Promise<string> {
+    const validatedArgs = this.validateAdditionalArgs(additionalArgs);
+    const allArgs = [...targets, ...validatedArgs];
+    const { stdout, stderr } = await this.runBazelCommand("test", allArgs, onOutput);
     return `${stdout}\n${stderr}`;
   }
 
-  async listTargets(path: string, onOutput?: (chunk: string) => void): Promise<string> {
+  async listTargets(path: string, additionalArgs?: string[], onOutput?: (chunk: string) => void): Promise<string> {
     const queryPattern = `${path}/...`;
-    const { stdout } = await this.runBazelCommand("query", [queryPattern], onOutput);
+    const validatedArgs = this.validateAdditionalArgs(additionalArgs);
+    const allArgs = [queryPattern, ...validatedArgs];
+    const { stdout } = await this.runBazelCommand("query", allArgs, onOutput);
     return stdout;
   }
 
-  async fetchDependencies(targets?: string[], onOutput?: (chunk: string) => void): Promise<string> {
+  async fetchDependencies(targets?: string[], additionalArgs?: string[], onOutput?: (chunk: string) => void): Promise<string> {
+    const validatedArgs = this.validateAdditionalArgs(additionalArgs);
     const args = ["fetch"];
     if (targets && targets.length > 0) {
       args.push(...targets);
@@ -263,6 +351,7 @@ class BazelClient {
       args.push("//...");
     }
     
+    args.push(...validatedArgs);
     const { stdout, stderr } = await this.runBazelCommand("build", args, onOutput);
     return `${stdout}\n${stderr}`;
   }
@@ -436,7 +525,7 @@ async function main() {
             if (!args.targets || args.targets.length === 0) {
               throw new Error("Missing required argument: targets");
             }
-            response = await bazelClient.buildTargets(args.targets);
+            response = await bazelClient.buildTargets(args.targets, args.additionalArgs);
             break;
           }
 
@@ -446,7 +535,7 @@ async function main() {
             if (!args.pattern) {
               throw new Error("Missing required argument: pattern");
             }
-            response = await bazelClient.queryTarget(args.pattern);
+            response = await bazelClient.queryTarget(args.pattern, args.additionalArgs);
             break;
           }
 
@@ -456,7 +545,7 @@ async function main() {
             if (!args.targets || args.targets.length === 0) {
               throw new Error("Missing required argument: targets");
             }
-            response = await bazelClient.testTargets(args.targets);
+            response = await bazelClient.testTargets(args.targets, args.additionalArgs);
             break;
           }
 
@@ -466,14 +555,14 @@ async function main() {
             if (!args.path) {
               throw new Error("Missing required argument: path");
             }
-            response = await bazelClient.listTargets(args.path);
+            response = await bazelClient.listTargets(args.path, args.additionalArgs);
             break;
           }
 
           case "bazel_fetch_dependencies": {
             const args = request.params.arguments as unknown as FetchDependenciesArgs;
             log(`Processing bazel_fetch_dependencies`, 'info', false);
-            response = await bazelClient.fetchDependencies(args.targets);
+            response = await bazelClient.fetchDependencies(args.targets, args.additionalArgs);
             break;
           }
           
