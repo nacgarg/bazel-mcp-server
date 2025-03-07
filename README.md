@@ -29,6 +29,8 @@ You don't need to provide the workspace path, as the LLM can use `set_workspace_
 
 The bazel binary usually gets picked up automatically, but if you run into issues, you can provide the path to the bazel binary using the `--bazel_path` flag.
 
+> :warning: Note that this will not work when using Cursor with Remote SSH sessions, since it runs the MCP server locally.
+
 ```json
 {
   "mcpServers": {
